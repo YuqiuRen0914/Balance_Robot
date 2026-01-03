@@ -1,0 +1,200 @@
+#pragma once
+
+#include <stdint.h>
+
+/********** MPU6050 **********/
+#define I2C0_SDA 42
+#define I2C0_SCL 41
+#define I2C_FREQUENCY 400000
+
+/********** RGB(WS2812) **********/
+#define RGB_LED_PIN         38
+#define RGB_LED_COUNT       5
+
+/********** AB编码器  **********/
+/* 左轮编码器 */
+#define ENCODER_B1A_PIN      GPIO_NUM_17  
+#define ENCODER_B1B_PIN      GPIO_NUM_18    
+
+/* 右轮编码器 */
+#define ENCODER_B2A_PIN      GPIO_NUM_3
+#define ENCODER_B2B_PIN      GPIO_NUM_8
+
+/********** 电机驱动 TB6612 **********/
+/* 左轮电机 */
+#define MOTOR_A_IN1_PIN      7
+#define MOTOR_A_IN2_PIN      15
+#define MOTOR_A_PWM_PIN      16
+
+/* 右轮电机 */
+#define MOTOR_B_IN1_PIN      6
+#define MOTOR_B_IN2_PIN      5
+#define MOTOR_B_PWM_PIN      4
+
+/********** PWM 参数 (LEDC) **********/
+#define PWM_RESOLUTION      12  // PWM 分辨率 12 位
+#define PWM_FREQ            5000
+#define MIN_DUTY            0
+#define MAX_DUTY            ((1UL << PWM_RESOLUTION) - 1)
+
+/********** 屏幕配置 **********/
+#define SCREEN_SDA_PIN      46
+#define SCREEN_SCL_PIN      9
+#define SCREEN_WIDTH        128
+#define SCREEN_HEIGHT       32
+#define SCREEN_REFRESH_TIME 100   // ms
+#define SCREEN_I2C_ADDRESS  0x78  // 0x78 on label; driver will shift to 7-bit (0x3C)
+
+/********** 控制死区 **********/
+#define PITCH_ANG_DEADBAND 0.0f   // pitch角度死区，单位：度
+#define PITCH_SPD_DEADBAND 0.0f   // 速度环死区，单位：rad/s
+#define PITCH_TOR_DEADBAND 0.0f  // 力矩输出死区
+
+/********** 速度环转换为Pitch角度配置 **********/
+static constexpr float RAD_TO_DEG_F = 57.29577951308232f;
+static constexpr float PITCH_ANGLE_OFFSET_LIMIT = 10.0f;   // 最大前倾/后仰角度修正
+
+/********** Yaw配置 **********/
+static constexpr float YAW_RATE_MAX_DEG_S = 200.0f;        // 摇杆满量程对应的偏航角速度
+static constexpr float YAW_RATE_CMD_DEADBAND = 0.5f;       // 摇杆转换的角速度死区
+static constexpr float YAW_TORQUE_DEADBAND = 0.02f;        // 偏航输出死区，避免轻微抖动
+
+/********** wifi配置 **********/
+#define SSID "roderick"
+#define PASSWORD "qazwsxedcr"
+
+/********** 电池检测 **********/
+#define BAT_PIN 10
+
+/********** 结构数据体 **********/
+struct imu_data
+{
+    float anglex;
+    float angley;
+    float anglez;
+    float gyrox;
+    float gyroy;
+    float gyroz;
+};
+
+struct pid_config
+{
+    float p, i, d;
+    float k; // 斜率
+    float l; // 最值限制
+};
+
+struct motion_state
+{
+    float now;
+    float last;
+    float tar;
+    float err;
+    float duty;
+};
+struct joy_state
+{
+    float x;
+    float y;
+    float a; // 方向角
+    float r;
+    float x_coef;
+    float y_coef;
+};
+struct fallen_state
+{
+    bool is;     // 是否摔倒
+    int count;   // 计数
+    bool enable; // 检测是否启用
+};
+
+
+struct motor_duty
+{
+    float base_duty;
+    float yaw_duty;
+    float L_duty;            // 实际写入 PWM（含死区补偿）
+    float R_duty;
+    float L_cmd;             // 归一化控制指令（-1~1）
+    float R_cmd;
+    float L_deadzone_fwd;    // 左轮正向起转占空比
+    float L_deadzone_rev;    // 左轮反向起转占空比
+    float R_deadzone_fwd;    // 右轮正向起转占空比
+    float R_deadzone_rev;    // 右轮反向起转占空比
+};
+
+struct wel_data
+{
+    float spd1;
+    float spd2;
+    float pos1;
+    float pos2;
+};
+
+struct rgb_state
+{
+    int rgb_count; // 灯珠数量
+    int mode;      // 灯光模式 0-3
+};
+
+enum class group_role : uint8_t
+{
+    leader = 0,
+    follower = 1
+};
+
+struct group_state
+{
+    bool enabled;         // 是否开启编队模式
+    int group_number;     // 编队号
+    int group_count;      // 编队车辆总数（用于前端展示）
+    int member_index;     // 在编队中的序号
+    group_role role;      // 角色：头车 / 从车
+    char name[24];        // 编队名称
+    float target_linear;  // 最新收到的线速度期望（归一化 -1~1）
+    float target_yaw;     // 最新收到的转向期望（归一化 -1~1）
+    float applied_linear; // 平滑后的线速度指令
+    float applied_yaw;    // 平滑后的转向指令
+    uint32_t last_msg_ms; // 最近一次收到编队指令的时间戳
+    uint32_t timeout_ms;  // 超时时长，超时进入安全模式
+    bool failsafe;        // 是否处于安全模式（无指令超时）
+};
+
+struct robot_state
+{
+    int dt_ms;
+    int data_ms;
+
+    bool run;              //运行指示位
+    bool car_group_manual; // 用户手动开启车组模式
+    bool car_group_mode;   //车组模式（关闭自平衡，仅差速驱动）
+    bool chart_enable;     //图表推送位
+    bool joy_stop_control; //原地停车标志
+    bool wel_up;           //轮部离地标志
+
+    float pitch_zero;
+    group_state group_cfg;
+    wel_data wel;
+    motor_duty motor;
+
+    imu_data imu_zero;
+    imu_data imu_l;
+    imu_data imu;
+
+    joy_state joy;
+    joy_state joy_l;
+
+    fallen_state fallen;
+
+    rgb_state rgb;
+
+    motion_state ang;
+    motion_state spd;
+    motion_state pos;
+    motion_state yaw;
+
+    pid_config ang_pid;
+    pid_config spd_pid;
+    pid_config pos_pid;
+    pid_config yaw_pid;
+};

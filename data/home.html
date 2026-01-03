@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ESP32 控制台 · 轮足机器人</title>
+    <link rel="icon"
+        href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23111"/><path d="M16 40h32v8H16zm4-24h24v6H20zm-4 10h32v6H16z" fill="%23fff"/></svg>'>
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+    <div class="wrap">
+        <h1>ESP32 控制台 · 前端原型(V5-Refactored)</h1>
+        <div class="card toolbar">
+            <div class="ms">
+                <label>遥测间隔(ms):<input id="rateHz" type="number" min="20" max="1000" step="1" value="100"></label>
+                <button class="btn" id="btnSetRate">设置</button>
+            </div>
+            <div class="control-group">运行：<label class="switch"><input id="runSwitch" type="checkbox"><span
+                        class="slider"></span></label></div>
+            <div class="control-group">车组模式：<label class="switch"><input id="carGroupSwitch" type="checkbox"><span
+                        class="slider"></span></label></div>
+            <div class="control-group">图表推送：<label class="switch"><input id="chartSwitch" type="checkbox"><span
+                        class="slider"></span></label></div>
+            <div class="control-group">摔倒检测：<label class="switch"><input id="fallDetectSwitch" type="checkbox"><span
+                        class="slider"></span></label></div>
+            <div class="readout" id="status" style="margin-left:auto">状态: booting…</div>
+        </div>
+
+        <div class="card toolbar" style="margin-top:10px">
+            <div class="ms">
+                <div class="indicator">摔倒：<span class="bulb off" id="fallLamp"></span><span class="readout"
+                        id="fallLabel">—</span></div>
+            </div>
+        </div>
+
+        <div class="card formation-card" id="formationCard">
+            <div class="card-header">
+                <h2>编队控制</h2>
+                <div class="mode-switch">
+                    <button class="btn ghost active" id="modeSoloBtn">独立模式</button>
+                    <button class="btn ghost" id="modeFormationBtn">编队模式</button>
+                </div>
+            </div>
+            <div class="formation-top">
+                <div class="fleet-add">
+                    <label>车辆地址</label>
+                    <div class="fleet-add-row">
+                        <input id="fleetHostInput" type="text" placeholder="例如 192.168.1.80">
+                        <button class="btn" id="fleetAddBtn">添加</button>
+                    </div>
+                    <div class="fleet-meta">在线车辆：<span id="fleetCount">0</span></div>
+                </div>
+                <div class="formation-config">
+                    <label>编队号</label>
+                    <input id="formationGroupId" type="number" min="0" max="255" value="1">
+                    <label>车组名</label>
+                    <input id="formationGroupName" type="text" placeholder="可选" maxlength="20">
+                    <label>超时(ms)</label>
+                    <input id="formationTimeout" type="number" min="200" max="3000" value="800">
+                    <button class="btn" id="formationSyncBtn">下发配置</button>
+                    <button class="btn ghost" id="formationStopBtn">急停</button>
+                </div>
+            </div>
+            <div class="fleet-list" id="fleetList"></div>
+            <div class="formation-foot">在“编队模式”下，摇杆与速度指令会同步广播给所有勾选“加入编队”的车辆，并携带角色、序号等配置。</div>
+            <div id="formationSummary" class="formation-summary hidden">
+                <div class="formation-summary-title" id="formationSummaryName">组 #1</div>
+                <div class="formation-summary-detail" id="formationSummaryDetail">成员 0 · 角色 未知</div>
+            </div>
+        </div>
+
+        <div class="card neon-card" id="rgbCard">
+            <div class="rgb-head">
+                <div>
+                    <div class="eyebrow">RGB MATRIX</div>
+                    <h2>灯效控制</h2>
+                </div>
+                <div class="tag" id="rgbModeTag">待机</div>
+            </div>
+            <div class="rgb-body">
+                <div class="rgb-panel">
+                    <div class="chip-row" id="rgbModeList"></div>
+                    <p class="rgb-desc" id="rgbModeDesc">选择一个灯效模式进行预览和切换</p>
+                </div>
+                <div class="rgb-config">
+                    <div class="label-row">
+                        <span>灯珠数量</span>
+                        <span class="ghost-text">Max <span id="rgbCountValue">5</span></span>
+                    </div>
+                    <input type="range" id="rgbCountRange" min="1" max="12" value="5">
+                    <div class="count-input-row">
+                        <input type="number" id="rgbCountInput" min="1" max="12" value="5">
+                        <span class="ghost-text">实时同步</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid cols-3">
+            <div class="card">
+                <h2 id="chartTitle1">图1</h2>
+                <div class="chart-container"><canvas id="chart1"></canvas></div>
+            </div>
+            <div class="card">
+                <h2 id="chartTitle2">图2</h2>
+                <div class="chart-container"><canvas id="chart2"></canvas></div>
+            </div>
+            <div class="card">
+                <h2 id="chartTitle3">图3</h2>
+                <div class="chart-container"><canvas id="chart3"></canvas></div>
+            </div>
+        </div>
+
+        <div class="card" id="pidCard">
+            <div class="card-header">
+                <h2>控制参数</h2>
+                <div class="button-group">
+                    <button class="btn" id="btnPidSend">发送</button>
+                    <button class="btn" id="btnPidPull">更新</button>
+                </div>
+            </div>
+            <div class="pid-grid">
+                <div class="pid-row">
+                    <div class="pid-group-title" id="pidGroup1">参数01-03</div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid1Label1">参数01</span><span class="nbox"><span
+                                    id="sv_key01">0.000</span><input type="number" id="nv_key01" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key01" type="range" step="0.001" value="0">
+                    </div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid1Label2">参数02</span><span class="nbox"><span
+                                    id="sv_key02">0.000</span><input type="number" id="nv_key02" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key02" type="range" step="0.001" value="0">
+                    </div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid1Label3">参数03</span><span class="nbox"><span
+                                    id="sv_key03">0.000</span><input type="number" id="nv_key03" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key03" type="range" step="0.001" value="0">
+                    </div>
+                </div>
+                <div class="pid-row">
+                    <div class="pid-group-title" id="pidGroup2">参数04-06</div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid2Label1">参数04</span><span class="nbox"><span
+                                    id="sv_key04">0.000</span><input type="number" id="nv_key04" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key04" type="range" step="0.001" value="0">
+                    </div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid2Label2">参数05</span><span class="nbox"><span
+                                    id="sv_key05">0.000</span><input type="number" id="nv_key05" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key05" type="range" step="0.001" value="0">
+                    </div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid2Label3">参数06</span><span class="nbox"><span
+                                    id="sv_key06">0.000</span><input type="number" id="nv_key06" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key06" type="range" step="0.001" value="0">
+                    </div>
+                </div>
+                <div class="pid-row">
+                    <div class="pid-group-title" id="pidGroup3">参数07-09</div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid3Label1">参数07</span><span class="nbox"><span
+                                    id="sv_key07">0.000</span><input type="number" id="nv_key07" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key07" type="range" step="0.001" value="0">
+                    </div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid3Label2">参数08</span><span class="nbox"><span
+                                    id="sv_key08">0.000</span><input type="number" id="nv_key08" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key08" type="range" step="0.001" value="0">
+                    </div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid3Label3">参数09</span><span class="nbox"><span
+                                    id="sv_key09">0.000</span><input type="number" id="nv_key09" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key09" type="range" step="0.001" value="0">
+                    </div>
+                </div>
+                <div class="pid-row">
+                    <div class="pid-group-title" id="pidGroup4">参数10-12</div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid4Label1">参数10</span><span class="nbox"><span
+                                    id="sv_key10">0.000</span><input type="number" id="nv_key10" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key10" type="range" step="0.001" value="0">
+                    </div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid4Label2">参数11</span><span class="nbox"><span
+                                    id="sv_key11">0.000</span><input type="number" id="nv_key11" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key11" type="range" step="0.001" value="0">
+                    </div>
+                    <div class="slider-item">
+                        <div class="slider-head"><span id="pid4Label3">参数12</span><span class="nbox"><span
+                                    id="sv_key12">0.000</span><input type="number" id="nv_key12" step="0.001"
+                                    value="0.000"></span></div><input id="rg_key12" type="range" step="0.001" value="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex">
+            <div class="card" style="flex:1.2">
+                <div class="card-header">
+                    <h2>机器人 3D 姿态示意</h2>
+                    <button class="btn" id="btnZeroAtt">重置</button>
+                </div>
+                <div id="robotCanvas"></div>
+                <div class="readout" id="attOut">pitch: 0.0° roll: 0.0° yaw: 0.0°</div>
+            </div>
+            <div class="card joystick-wrap" style="flex:.8">
+                <div class="joy-panel">
+                    <h2>遥控</h2>
+                    <div class="joystick" id="joystick">
+                        <div class="stick" id="stick"></div>
+                    </div>
+                    <div class="joy-readout" id="joyOut">x: 0.00 y: 0.00 r: 0.00 θ: 0.0°</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>事件日志</h2>
+            <pre class="readout" id="log">boot</pre>
+        </div>
+    </div>
+
+    <script src="/js/lib/chart.umd.js"></script>
+    <script src="/js/lib/three.min.js"></script>
+    <script type="module" src="/js/main.js"></script>
+
+    <div class="modal hidden" id="groupInviteModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card">
+            <h3 id="groupInviteTitle">加入车组?</h3>
+            <p id="groupInviteDesc">收到主车的编队配置，是否加入？</p>
+            <div class="modal-actions">
+                <button class="btn ghost" id="groupInviteReject">No</button>
+                <button class="btn" id="groupInviteAccept">Yes</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
