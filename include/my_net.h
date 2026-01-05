@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Arduino.h>
 #include "my_tool.h"
 #include "my_control.h"
 #include "freertos/FreeRTOS.h"
@@ -10,6 +11,18 @@
 void my_wifi_init();       // 初始化网络
 void my_web_asyn_init();   // 初始化网页
 void my_web_data_update(); // 数据更新
+
+struct wifi_runtime_config
+{
+    String ssid;
+    String password;
+    bool open;
+};
+
+// WiFi 配置（SoftAP）
+const wifi_runtime_config &wifi_current_config();
+bool wifi_update_and_apply(const String &ssid, const String &password, String &err);
+IPAddress wifi_ap_ip();
 
 // 图表显示模式
 #define CHART_PID
@@ -24,7 +37,7 @@ void my_web_data_update(); // 数据更新
 
 #ifdef CHART_PID
 // 发送和接受数据定义
-#define CHART_NAME1 "直立环"
+#define CHART_NAME1 "平衡控制"
 #define CHART_NAME11 "now"
 #define CHART_11 robot.ang.now
 #define CHART_NAME12 "tor"
@@ -32,7 +45,7 @@ void my_web_data_update(); // 数据更新
 #define CHART_NAME13 "err"
 #define CHART_13 robot.ang.err
 
-#define CHART_NAME2 "速度环"
+#define CHART_NAME2 "速度响应"
 #define CHART_NAME21 "now"
 #define CHART_21 robot.spd.now
 #define CHART_NAME22 "tor"
@@ -40,7 +53,7 @@ void my_web_data_update(); // 数据更新
 #define CHART_NAME23 "err"
 #define CHART_23 robot.spd.err
 
-#define CHART_NAME3 "位置环"
+#define CHART_NAME3 "位置控制"
 #define CHART_NAME31 "now"
 #define CHART_31 robot.pos.now
 #define CHART_NAME32 "tor"
@@ -77,28 +90,28 @@ void my_web_data_update(); // 数据更新
 #endif
 
 // 滑块关联数据 =============================================
-#define SLIDER_NAME1 "直立环"
+#define SLIDER_NAME1 "平衡控制参数"
 #define SLIDER_NAME11 "P"
 #define SLIDER_11 robot.ang_pid.p
 #define SLIDER_NAME12 "I"
 #define SLIDER_12 robot.ang_pid.i
 #define SLIDER_NAME13 "D"
 #define SLIDER_13 robot.ang_pid.d
-#define SLIDER_NAME2 "速度环"
+#define SLIDER_NAME2 "速度控制参数"
 #define SLIDER_NAME21 "P"
 #define SLIDER_21 robot.spd_pid.p
 #define SLIDER_NAME22 "I"
 #define SLIDER_22 robot.spd_pid.i
 #define SLIDER_NAME23 "D"
 #define SLIDER_23 robot.spd_pid.d
-#define SLIDER_NAME3 "位置环"
+#define SLIDER_NAME3 "位置控制参数"
 #define SLIDER_NAME31 "P"
 #define SLIDER_31 robot.pos_pid.p
 #define SLIDER_NAME32 "I"
 #define SLIDER_32 robot.pos_pid.i
 #define SLIDER_NAME33 "D"
 #define SLIDER_33 robot.pos_pid.d
-#define SLIDER_NAME4 "偏航环"
+#define SLIDER_NAME4 "转向控制参数"
 #define SLIDER_NAME41 "P"
 #define SLIDER_41 robot.yaw_pid.p
 #define SLIDER_NAME42 "I"

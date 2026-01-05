@@ -1,6 +1,6 @@
 // /assets/js/main.js
 import { state, domElements } from "./config.js";
-import { initUI, updateFallIndicator, logLine } from "./ui.js";
+import { initUI, updateFallIndicator, updateEnergyBar, logLine } from "./ui.js";
 import { initCharts, feedChartsData, applyChartConfig } from "./modules/charts.js";
 import { init3D, setAttitude } from "./modules/robot3D.js";
 import { initPID, fillPidToUI, applySliderConfig } from "./modules/pid.js";
@@ -11,6 +11,7 @@ import {
   updateRgbState,
 } from "./modules/rgb.js";
 import { initFormation, handleGroupState } from "./modules/group.js";
+import { initWifiSettings, applyWifiStateFromHttp } from "./modules/wifi.js";
 import { connectWebSocket, syncInitialState } from "./services/websocket.js";
 
 /**
@@ -30,9 +31,13 @@ async function main() {
 
   // 启动时将指示灯置为初始状态
   updateFallIndicator(null);
+  updateEnergyBar(0);
   
   // 从后端同步初始状态 (HTTP)
-  await syncInitialState();
+  const initState = await syncInitialState();
+  applyWifiStateFromHttp(initState?.wifi);
+  if (typeof initState?.battery === "number") updateEnergyBar(initState.battery);
+  initWifiSettings();
   
   // 建立 WebSocket 连接
   connectWebSocket({
@@ -41,15 +46,19 @@ async function main() {
       if (typeof msg.pitch !== 'undefined') {
         setAttitude(msg.pitch, msg.roll, msg.yaw);
       }
+
+      if (typeof msg.fallen !== 'undefined') {
+        updateFallIndicator(msg.fallen);
+      }
       
       // 图表和指示灯更新 (仅在图表开启时)
       if (state.chartsOn) {
         if (Array.isArray(msg.d) && msg.d.length >= 9) {
           feedChartsData(...msg.d);
         }
-        if (typeof msg.fallen !== 'undefined') {
-          updateFallIndicator(msg.fallen);
-        }
+      }
+      if (typeof msg.battery === "number") {
+        updateEnergyBar(msg.battery);
       }
     },
     onUiConfig: (msg) => {

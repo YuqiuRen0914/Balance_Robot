@@ -60,8 +60,8 @@ static constexpr float YAW_RATE_CMD_DEADBAND = 0.5f;       // 摇杆转换的角
 static constexpr float YAW_TORQUE_DEADBAND = 0.02f;        // 偏航输出死区，避免轻微抖动
 
 /********** wifi配置 **********/
-#define SSID "roderick"
-#define PASSWORD "qazwsxedcr"
+#define SSID "Balance_Robot"
+#define PASSWORD "123456789"
 
 /********** 电池检测 **********/
 #define BAT_PIN 10
