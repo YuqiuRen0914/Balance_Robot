@@ -20,7 +20,11 @@
             </div>
             <div class="control-group">运行：<label class="switch"><input id="runSwitch" type="checkbox"><span
                         class="slider"></span></label></div>
+<<<<<<< Updated upstream
             <div class="control-group">车组模式：<label class="switch"><input id="carGroupSwitch" type="checkbox"><span
+=======
+            <div class="control-group">队长广播：<label class="switch"><input id="carGroupSwitch" type="checkbox"><span
+>>>>>>> Stashed changes
                         class="slider"></span></label></div>
             <div class="control-group">图表推送：<label class="switch"><input id="chartSwitch" type="checkbox"><span
                         class="slider"></span></label></div>
@@ -38,6 +42,7 @@
 
         <div class="card formation-card" id="formationCard">
             <div class="card-header">
+<<<<<<< Updated upstream
                 <h2>编队控制</h2>
                 <div class="mode-switch">
                     <button class="btn ghost active" id="modeSoloBtn">独立模式</button>
@@ -55,17 +60,43 @@
                 </div>
                 <div class="formation-config">
                     <label>编队号</label>
+=======
+                <h2>机甲编队系统</h2>
+            </div>
+            <div class="formation-top hidden" id="formationConfigBlock">
+                <div class="formation-config full">
+                    <label>编队编号</label>
+>>>>>>> Stashed changes
                     <input id="formationGroupId" type="number" min="0" max="255" value="1">
                     <label>车组名</label>
                     <input id="formationGroupName" type="text" placeholder="可选" maxlength="20">
                     <label>超时(ms)</label>
                     <input id="formationTimeout" type="number" min="200" max="3000" value="800">
+<<<<<<< Updated upstream
                     <button class="btn" id="formationSyncBtn">下发配置</button>
                     <button class="btn ghost" id="formationStopBtn">急停</button>
                 </div>
             </div>
             <div class="fleet-list" id="fleetList"></div>
             <div class="formation-foot">在“编队模式”下，摇杆与速度指令会同步广播给所有勾选“加入编队”的车辆，并携带角色、序号等配置。</div>
+=======
+                    <div class="btn-row">
+                        <button class="btn" id="formationSyncBtn">同步编队指令</button>
+                        <button class="btn ghost" id="formationStopBtn">紧急制动</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="peer-panel">
+                <div class="peer-head">
+                    <h3>附近小车</h3>
+                    <span class="ghost-text" id="peerCount">0 台</span>
+                </div>
+                <div class="peer-list" id="peerList"></div>
+            </div>
+
+            <div class="formation-foot hidden" id="formationFoot">在“队长广播”模式下，操纵盘的指令会同步给所有加入编队的机甲，并携带角色与序号。</div>
+>>>>>>> Stashed changes
             <div id="formationSummary" class="formation-summary hidden">
                 <div class="formation-summary-title" id="formationSummaryName">组 #1</div>
                 <div class="formation-summary-detail" id="formationSummaryDetail">成员 0 · 角色 未知</div>
@@ -236,6 +267,18 @@
             <div class="modal-actions">
                 <button class="btn ghost" id="groupInviteReject">No</button>
                 <button class="btn" id="groupInviteAccept">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="groupRequestModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card">
+            <h3 id="groupRequestTitle">收到入队申请</h3>
+            <p id="groupRequestDesc">有小车申请加入当前编队，是否同意？</p>
+            <div class="modal-actions">
+                <button class="btn ghost" id="groupRequestReject">拒绝</button>
+                <button class="btn" id="groupRequestApprove">同意</button>
             </div>
         </div>
     </div>

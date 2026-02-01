@@ -78,18 +78,22 @@ function bindToolbarEvents() {
   if (domElements.carGroupSwitch) {
     domElements.carGroupSwitch.onchange = () => {
       state.carGroupMode = domElements.carGroupSwitch.checked;
-      // 打开时进入编队模式（沿用原编队配置），关闭时退队
-      if (state.carGroupMode) {
-        domElements.modeFormationBtn?.click();
-      } else {
-        domElements.modeSoloBtn?.click();
-      }
-      sendWebSocketMessage({
+      // 通知编队模块切换显示/模式
+      window.dispatchEvent(new CustomEvent("car-group-toggle", { detail: { on: state.carGroupMode } }));
+      // 切换时立即下发配置，开启则自我声明为队长，成员至少 1
+      const payload = {
         type: "group_cfg",
         enable: state.carGroupMode,
         group_id: state.formation.groupId,
         timeout_ms: state.formation.timeoutMs,
         name: state.formation.groupName,
+        role: state.carGroupMode ? "leader" : "leader",
+        index: 0,
+        count: 1,
+      };
+      sendWebSocketMessage({
+        type: "group_cfg",
+        ...payload,
       });
       appendLog(`[SEND] car_group ${state.carGroupMode ? "enable" : "disable"} (group ${state.formation.groupId})`);
     };

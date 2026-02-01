@@ -4,6 +4,7 @@
 #include "my_encoder.h"
 #include "my_tool.h"
 #include "my_motor.h"
+#include "my_pid_limits.h"
 
 PIDController PID_ANG{robot.ang_pid.p, robot.ang_pid.i, 0, robot.ang_pid.k, robot.ang_pid.l};               // 直立控制
 PIDController PID_SPD{robot.spd_pid.p, robot.spd_pid.i, robot.spd_pid.d, robot.spd_pid.k, robot.spd_pid.l}; // 速度控制
@@ -27,6 +28,7 @@ namespace
 
 void pid_state_update()
 {
+    clamp_all_pid(robot);
     // 更新PID控制器状态
     PID_ANG.P = robot.ang_pid.p;
     PID_ANG.I = robot.ang_pid.i;

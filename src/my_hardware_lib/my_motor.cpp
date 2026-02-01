@@ -3,6 +3,7 @@
 #include "my_config.h"
 #include "my_encoder.h"
 #include "my_motion.h"
+#include "my_boardRGB.h"
 
 volatile float motor_left_u = 0.0f;
 volatile float motor_right_u = 0.0f;
@@ -27,6 +28,7 @@ namespace
     constexpr uint8_t RIGHT_PWM_CH = 1;
     constexpr float CALI_STEP = 0.05f;   // 起转测试步长（占空比）
     constexpr uint32_t CALI_DELAY_MS = 40; // 每档等待时间
+    constexpr float NoFeedbackDuty = 0.99f; // 校准跑满视为无编码器反馈
 
     // 起转死区占空比（正向/反向），运行中用于补偿
     float left_forward_start = 0.1f;
@@ -158,6 +160,16 @@ void my_motor_init()
     robot.motor.L_deadzone_rev = left_reverse_start;
     robot.motor.R_deadzone_fwd = right_forward_start;
     robot.motor.R_deadzone_rev = right_reverse_start;
+
+    const bool feedback_missing = (left_forward_start >= NoFeedbackDuty) ||
+                                  (left_reverse_start >= NoFeedbackDuty) ||
+                                  (right_forward_start >= NoFeedbackDuty) ||
+                                  (right_reverse_start >= NoFeedbackDuty);
+    if (feedback_missing)
+    {
+        Serial.println("[MOTOR] encoder feedback missing, check motor/encoder wiring");
+        my_boardRGB_notify_peripheral_missing();
+    }
 
     // 校准后重置编码器计数，避免位置有偏移
     my_encoder_init();

@@ -76,6 +76,10 @@ function getPositionFromEvent(e) {
 }
 
 function sendJoystickData() {
+  // 从车加入编队后，不接受本机操控，完全由主车下发
+  if (state.formation.joined && state.formation.role === "follower") {
+    return;
+  }
   if (state.mode === "formation") {
     sendFormationControl(state.joystick.y, state.joystick.x);
   } else {

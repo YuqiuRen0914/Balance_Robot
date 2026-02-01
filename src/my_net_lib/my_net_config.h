@@ -15,6 +15,8 @@
 #define REFRESH_RATE_DEF 10
 #define REFRESH_RATE_MAX 60
 #define REFRESH_RATE_MIN 1
+// 固定 2.4G Wi-Fi 信道（所有车必须一致，ESP-NOW 需同信道）
+#define WIFI_FIXED_CHANNEL 6
 
 struct ChartConfig
 {

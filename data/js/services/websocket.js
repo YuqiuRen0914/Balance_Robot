@@ -10,6 +10,16 @@ let pidParamsCallback = null;
 let rgbStateCallback = null;
 let groupStateCallback = null;
 
+function handleGroupSnapshot(group) {
+  if (!group) return;
+  if (typeof group.group_id === "number") state.formation.groupId = group.group_id;
+  if (typeof group.timeout_ms === "number") state.formation.timeoutMs = group.timeout_ms;
+  if (typeof group.name === "string") state.formation.groupName = group.name;
+  state.formation.joined = !!group.enabled;
+  if (typeof group.request_name === "string") state.formation.requestName = group.request_name;
+  if (groupStateCallback) groupStateCallback(group);
+}
+
 /**
  * 发送 WebSocket 消息 (JSON)
  * @param {object} obj
@@ -37,6 +47,7 @@ function handleMessage(event) {
 
   switch (msg.type) {
     case "telemetry":
+      if (msg.group) handleGroupSnapshot(msg.group);
       if (telemetryCallback) telemetryCallback(msg);
       break;
     case "ui_config":
@@ -49,13 +60,7 @@ function handleMessage(event) {
       if (rgbStateCallback) rgbStateCallback(msg);
       break;
     case "group_state":
-      if (msg.group) {
-        if (typeof msg.group.group_id === "number") state.formation.groupId = msg.group.group_id;
-        if (typeof msg.group.timeout_ms === "number") state.formation.timeoutMs = msg.group.timeout_ms;
-        if (typeof msg.group.name === "string") state.formation.groupName = msg.group.name;
-        state.formation.joined = !!msg.group.enabled;
-      }
-      if (groupStateCallback) groupStateCallback(msg.group ?? msg);
+      handleGroupSnapshot(msg.group ?? msg);
       break;
     case "info":
       if (msg.text) appendLog(`[INFO] ${msg.text}`);
@@ -135,8 +140,13 @@ export async function syncInitialState() {
     if (typeof s.ms === "number") domElements.rateHzInput.value = s.ms;
     if (typeof s.running === "boolean")
       domElements.runSwitch.checked = !!s.running;
-    // 车组模式跟随组启用状态
-    if (s.group && typeof s.group.enabled === "boolean" && domElements.carGroupSwitch) {
+    // 车组模式开关仅对主车自身操作，避免从车被动拉起
+    if (
+      s.group &&
+      typeof s.group.enabled === "boolean" &&
+      s.group.role === "leader" &&
+      domElements.carGroupSwitch
+    ) {
       state.carGroupMode = !!s.group.enabled;
       domElements.carGroupSwitch.checked = state.carGroupMode;
     }
@@ -169,7 +179,34 @@ export async function syncInitialState() {
         state.formation.timeoutMs = s.group.timeout_ms;
         if (domElements.formationTimeout) domElements.formationTimeout.value = state.formation.timeoutMs;
       }
+      if (typeof s.group.leader_ip === "string") {
+        state.formation.leaderIp = s.group.leader_ip;
+      }
+      if (typeof s.group.request_from_ip === "string") {
+        state.formation.requestFromIp = s.group.request_from_ip;
+      }
     }
+<<<<<<< Updated upstream
+=======
+    if (s.wifi) {
+      state.wifi.ssid = s.wifi.ssid || state.wifi.ssid;
+      state.wifi.password = s.wifi.password || state.wifi.password;
+      state.wifi.open =
+        typeof s.wifi.open === "boolean"
+          ? s.wifi.open
+          : (s.wifi.password || "").length < 8;
+      state.wifi.ip = s.wifi.ip || state.wifi.ip;
+      state.wifi.staSsid = s.wifi.sta_ssid || state.wifi.staSsid;
+      state.wifi.staIp = s.wifi.sta_ip || state.wifi.staIp;
+      state.wifi.staConnected = typeof s.wifi.sta_connected === "boolean" ? s.wifi.sta_connected : state.wifi.staConnected;
+    }
+    if (typeof s.battery === "number") {
+      state.battery.voltage = s.battery;
+    }
+    if (typeof s.self_mac === "string") {
+      state.selfMac = s.self_mac.toUpperCase();
+    }
+>>>>>>> Stashed changes
     appendLog(`[INIT] /api/state ok -> running=${s.running}, ms=${s.ms}`);
   } catch (e) {
     appendLog(`[INIT] /api/state fail: ${e.message}`);

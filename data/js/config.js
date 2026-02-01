@@ -8,18 +8,34 @@ export const state = {
   chartsOn: false,
   carGroupMode: false,
   mode: "solo",
+  selfMac: "",
   formation: {
     groupId: 1,
     timeoutMs: 800,
     groupName: "",
     joined: false,
+    memberCount: 1,
+    memberIndex: 0,
+    requestPending: false,
+    requestFrom: "",
+    requestFromIp: "",
+    requestGroup: 0,
+    requestName: "",
+    leaderIp: "",
   },
+  peers: [],
   fleet: [],
   isPageVisible: true,
   joystick: { x: 0, y: 0, a: 0, isDragging: false, lastSendTime: 0 },
   pidParams: {},
   attitudeZero: { roll: 0, yaw: 0 },
   rgb: { mode: 0, count: 5, max: 12 },
+<<<<<<< Updated upstream
+=======
+  wifi: { ssid: "", password: "", open: false, ip: "", staSsid: "", staIp: "", staConnected: false },
+  battery: { voltage: 0, percent: 0 },
+  pidLimits: {}, // 运行时从后端获取的 PID 上下限
+>>>>>>> Stashed changes
   charts: {
     chart1: null,
     chart2: null,
@@ -103,8 +119,6 @@ export const domElements = {
   rgbCountValue: getElement("rgbCountValue"),
 
   // Formation
-  modeSoloBtn: getElement("modeSoloBtn"),
-  modeFormationBtn: getElement("modeFormationBtn"),
   fleetHostInput: getElement("fleetHostInput"),
   fleetAddBtn: getElement("fleetAddBtn"),
   fleetCount: getElement("fleetCount"),
@@ -117,11 +131,31 @@ export const domElements = {
   formationSummary: getElement("formationSummary"),
   formationSummaryName: getElement("formationSummaryName"),
   formationSummaryDetail: getElement("formationSummaryDetail"),
+  formationConfigBlock: getElement("formationConfigBlock"),
+  formationFoot: getElement("formationFoot"),
+  peerList: getElement("peerList"),
+  peerCount: getElement("peerCount"),
   groupInviteModal: getElement("groupInviteModal"),
   groupInviteTitle: getElement("groupInviteTitle"),
   groupInviteDesc: getElement("groupInviteDesc"),
   groupInviteAccept: getElement("groupInviteAccept"),
   groupInviteReject: getElement("groupInviteReject"),
+<<<<<<< Updated upstream
+=======
+  groupRequestModal: getElement("groupRequestModal"),
+  groupRequestTitle: getElement("groupRequestTitle"),
+  groupRequestDesc: getElement("groupRequestDesc"),
+  groupRequestApprove: getElement("groupRequestApprove"),
+  groupRequestReject: getElement("groupRequestReject"),
+
+  // WiFi
+  wifiSsidInput: getElement("wifiSsid"),
+  wifiPasswordInput: getElement("wifiPassword"),
+  wifiSaveBtn: getElement("wifiSaveBtn"),
+  wifiHint: getElement("wifiHint"),
+  wifiIp: getElement("wifiIp"),
+  wifiTogglePwd: getElement("wifiTogglePwd"),
+>>>>>>> Stashed changes
 };
 
 /**
