@@ -20,8 +20,6 @@ export const state = {
   pidParams: {},
   attitudeZero: { roll: 0, yaw: 0 },
   rgb: { mode: 0, count: 5, max: 12 },
-  wifi: { ssid: "", password: "", open: false, ip: "" },
-  battery: { voltage: 0, percent: 0 },
   charts: {
     chart1: null,
     chart2: null,
@@ -63,8 +61,6 @@ export const domElements = {
   // Indicators
   fallLamp: getElement("fallLamp"),
   fallLabel: getElement("fallLabel"),
-  energyFill: getElement("energyFill"),
-  energyText: getElement("energyText"),
 
   // Charts
   chart1: {
@@ -126,14 +122,6 @@ export const domElements = {
   groupInviteDesc: getElement("groupInviteDesc"),
   groupInviteAccept: getElement("groupInviteAccept"),
   groupInviteReject: getElement("groupInviteReject"),
-
-  // WiFi
-  wifiSsidInput: getElement("wifiSsid"),
-  wifiPasswordInput: getElement("wifiPassword"),
-  wifiSaveBtn: getElement("wifiSaveBtn"),
-  wifiHint: getElement("wifiHint"),
-  wifiIp: getElement("wifiIp"),
-  wifiTogglePwd: getElement("wifiTogglePwd"),
 };
 
 /**

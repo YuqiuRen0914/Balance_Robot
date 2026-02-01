@@ -1,7 +1,6 @@
 #include <cmath>
 #include "my_net_config.h"
 #include "my_car_group.h"
-#include "my_bat.h"
 
 static constexpr float JOY_X_DEADBAND = 0.10f;
 static constexpr float JOY_Y_DEADBAND = 0.02f;
@@ -20,7 +19,6 @@ void my_web_data_update()
     doc["pitch"] = ANGLE_X;
     doc["roll"] = ANGLE_Y;
     doc["yaw"] = ANGLE_Z;
-    doc["battery"] = battery_voltage;
     JsonObject g = doc["group"].to<JsonObject>();
     group_write_state(g);
     // 根据 charts_send 决定是否打包 n 路曲线数据

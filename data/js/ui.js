@@ -7,7 +7,7 @@ import { sendWebSocketMessage } from "./services/websocket.js";
  * @param {string} text - The status text to display.
  */
 export function setStatus(text) {
-  domElements.statusLabel.textContent = `连接状态: ${text}`;
+  domElements.statusLabel.textContent = `状态: ${text}`;
 }
 
 /**
@@ -37,13 +37,7 @@ export function appendLog(text) {
  * @param {boolean|null} fallState - null/undefined for off, true for fallen (red), false for stable (green).
  */
 export function updateFallIndicator(fallState) {
-  // 全局警报态：摔倒时给页面加上红色警告背景，恢复时淡出
-  const body = document.body;
-  if (body) body.classList.toggle("alert-fall", !!fallState);
-
   const { fallLamp, fallLabel } = domElements;
-  if (!fallLamp || !fallLabel) return;
-
   fallLamp.classList.remove("green", "red", "off");
 
   if (fallState === null || typeof fallState === "undefined") {
@@ -56,20 +50,6 @@ export function updateFallIndicator(fallState) {
     fallLamp.classList.add("green");
     fallLabel.textContent = "稳定";
   }
-}
-
-export function updateEnergyBar(voltage) {
-  if (!domElements.energyFill || !domElements.energyText) return;
-  const minV = 9.0;
-  const maxV = 12.6;
-  const clamped = Math.min(Math.max(voltage, minV), maxV);
-  const pct = Math.min(100, Math.max(0, ((clamped - minV) / (maxV - minV)) * 100));
-  const pctText = Math.round(pct);
-  const hueShift = (50 - pct) * 0.6; // 绿->蓝 平滑过渡
-  const brightness = 0.85 + pct * 0.0015;
-  domElements.energyFill.style.width = `${pct}%`;
-  domElements.energyFill.style.filter = `hue-rotate(${hueShift}deg) brightness(${brightness})`;
-  domElements.energyText.textContent = `${pctText}%`;
 }
 
 /**

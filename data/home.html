@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>双轮机甲 · 驾驶舱</title>
+    <title>ESP32 控制台 · 轮足机器人</title>
     <link rel="icon"
         href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23111"/><path d="M16 40h32v8H16zm4-24h24v6H20zm-4 10h32v6H16z" fill="%23fff"/></svg>'>
     <link rel="stylesheet" href="/css/main.css">
@@ -12,101 +12,62 @@
 
 <body>
     <div class="wrap">
-        <h1>双轮机甲 · 驾驶舱</h1>
+        <h1>ESP32 控制台 · 前端原型(V5-Refactored)</h1>
         <div class="card toolbar">
             <div class="ms">
-                <label>数据刷新速度:<input id="rateHz" type="number" min="20" max="1000" step="1" value="100"></label>
-                <button class="btn" id="btnSetRate">应用设置</button>
+                <label>遥测间隔(ms):<input id="rateHz" type="number" min="20" max="1000" step="1" value="100"></label>
+                <button class="btn" id="btnSetRate">设置</button>
             </div>
-            <div class="control-group">启动机甲：<label class="switch"><input id="runSwitch" type="checkbox"><span
+            <div class="control-group">运行：<label class="switch"><input id="runSwitch" type="checkbox"><span
                         class="slider"></span></label></div>
-            <div class="control-group">编队驾驶：<label class="switch"><input id="carGroupSwitch" type="checkbox"><span
+            <div class="control-group">车组模式：<label class="switch"><input id="carGroupSwitch" type="checkbox"><span
                         class="slider"></span></label></div>
-            <div class="control-group">数据面板：<label class="switch"><input id="chartSwitch" type="checkbox"><span
+            <div class="control-group">图表推送：<label class="switch"><input id="chartSwitch" type="checkbox"><span
                         class="slider"></span></label></div>
-            <div class="control-group">防摔保护：<label class="switch"><input id="fallDetectSwitch" type="checkbox"><span
+            <div class="control-group">摔倒检测：<label class="switch"><input id="fallDetectSwitch" type="checkbox"><span
                         class="slider"></span></label></div>
-            <div class="readout" id="status" style="margin-left:auto">连接状态: 等待连接…</div>
+            <div class="readout" id="status" style="margin-left:auto">状态: booting…</div>
         </div>
 
         <div class="card toolbar" style="margin-top:10px">
             <div class="ms">
-                <div class="indicator">车身状态：<span class="bulb off" id="fallLamp"></span><span class="readout"
+                <div class="indicator">摔倒：<span class="bulb off" id="fallLamp"></span><span class="readout"
                         id="fallLabel">—</span></div>
-            </div>
-            <div class="energy-wrap">
-                <span class="energy-label">能量</span>
-                <div class="energy-bar">
-                    <div class="energy-fill" id="energyFill"></div>
-                </div>
-                <span class="energy-text" id="energyText">--%</span>
-            </div>
-        </div>
-
-        <div class="card wifi-card" id="wifiCard">
-            <div class="card-header">
-                <div>
-                    <div class="wifi-eyebrow">机甲通信设置</div>
-                    <h2>通信链路</h2>
-                    <p class="ghost-text">修改机甲名称 / 连接密钥，重启通信模块</p>
-                </div>
-                <div class="wifi-badge">
-                    <span class="wifi-dot"></span>
-                    <span class="ghost-text">当前机甲地址</span>
-                    <span id="wifiIp">—</span>
-                </div>
-            </div>
-            <div class="wifi-grid">
-                <label class="form-field">
-                    <span>机甲名称</span>
-                    <input type="text" id="wifiSsid" maxlength="32" placeholder="Balance_Robot">
-                </label>
-                <label class="form-field">
-                    <span>连接密钥</span>
-                    <div class="password-input">
-                        <input type="password" id="wifiPassword" maxlength="63" placeholder="12345678">
-                        <button class="btn ghost" type="button" id="wifiTogglePwd">显示密钥</button>
-                    </div>
-                </label>
-                <div class="wifi-actions">
-                    <button class="btn" id="wifiSaveBtn">重启通信模块</button>
-                    <div class="wifi-hint" id="wifiHint">修改后通信模块会短暂重启，需重新连接</div>
-                </div>
             </div>
         </div>
 
         <div class="card formation-card" id="formationCard">
             <div class="card-header">
-                <h2>机甲编队系统</h2>
+                <h2>编队控制</h2>
                 <div class="mode-switch">
-                    <button class="btn ghost active" id="modeSoloBtn">单机驾驶</button>
-                    <button class="btn ghost" id="modeFormationBtn">编队驾驶</button>
+                    <button class="btn ghost active" id="modeSoloBtn">独立模式</button>
+                    <button class="btn ghost" id="modeFormationBtn">编队模式</button>
                 </div>
             </div>
             <div class="formation-top">
                 <div class="fleet-add">
-                    <label>机甲地址</label>
+                    <label>车辆地址</label>
                     <div class="fleet-add-row">
                         <input id="fleetHostInput" type="text" placeholder="例如 192.168.1.80">
-                        <button class="btn" id="fleetAddBtn">加入编队</button>
+                        <button class="btn" id="fleetAddBtn">添加</button>
                     </div>
-                    <div class="fleet-meta">在线机甲：<span id="fleetCount">0</span></div>
+                    <div class="fleet-meta">在线车辆：<span id="fleetCount">0</span></div>
                 </div>
                 <div class="formation-config">
-                    <label>编队编号</label>
+                    <label>编队号</label>
                     <input id="formationGroupId" type="number" min="0" max="255" value="1">
-                    <label>编队名称</label>
+                    <label>车组名</label>
                     <input id="formationGroupName" type="text" placeholder="可选" maxlength="20">
-                    <label>指令等待时间(ms)</label>
+                    <label>超时(ms)</label>
                     <input id="formationTimeout" type="number" min="200" max="3000" value="800">
-                    <button class="btn" id="formationSyncBtn">同步编队指令</button>
-                    <button class="btn ghost" id="formationStopBtn">紧急制动</button>
+                    <button class="btn" id="formationSyncBtn">下发配置</button>
+                    <button class="btn ghost" id="formationStopBtn">急停</button>
                 </div>
             </div>
             <div class="fleet-list" id="fleetList"></div>
-            <div class="formation-foot">在“编队驾驶”下，操纵盘的指令会同步给所有加入编队的机甲，并携带角色与序号。</div>
+            <div class="formation-foot">在“编队模式”下，摇杆与速度指令会同步广播给所有勾选“加入编队”的车辆，并携带角色、序号等配置。</div>
             <div id="formationSummary" class="formation-summary hidden">
-                <div class="formation-summary-title" id="formationSummaryName">编队 #1</div>
+                <div class="formation-summary-title" id="formationSummaryName">组 #1</div>
                 <div class="formation-summary-detail" id="formationSummaryDetail">成员 0 · 角色 未知</div>
             </div>
         </div>
@@ -114,8 +75,8 @@
         <div class="card neon-card" id="rgbCard">
             <div class="rgb-head">
                 <div>
-                    <div class="eyebrow">机甲灯效系统</div>
-                    <h2>机甲灯效系统</h2>
+                    <div class="eyebrow">RGB MATRIX</div>
+                    <h2>灯效控制</h2>
                 </div>
                 <div class="tag" id="rgbModeTag">待机</div>
             </div>
@@ -126,7 +87,7 @@
                 </div>
                 <div class="rgb-config">
                     <div class="label-row">
-                        <span>灯光模块数量</span>
+                        <span>灯珠数量</span>
                         <span class="ghost-text">Max <span id="rgbCountValue">5</span></span>
                     </div>
                     <input type="range" id="rgbCountRange" min="1" max="12" value="5">
@@ -140,22 +101,22 @@
 
         <div class="grid cols-3">
             <div class="card">
-                <h2 id="chartTitle1">平衡控制</h2>
+                <h2 id="chartTitle1">图1</h2>
                 <div class="chart-container"><canvas id="chart1"></canvas></div>
             </div>
             <div class="card">
-                <h2 id="chartTitle2">速度响应</h2>
+                <h2 id="chartTitle2">图2</h2>
                 <div class="chart-container"><canvas id="chart2"></canvas></div>
             </div>
             <div class="card">
-                <h2 id="chartTitle3">位置控制</h2>
+                <h2 id="chartTitle3">图3</h2>
                 <div class="chart-container"><canvas id="chart3"></canvas></div>
             </div>
         </div>
 
         <div class="card" id="pidCard">
             <div class="card-header">
-                <h2>机甲核心参数</h2>
+                <h2>控制参数</h2>
                 <div class="button-group">
                     <button class="btn" id="btnPidSend">发送</button>
                     <button class="btn" id="btnPidPull">更新</button>
@@ -163,7 +124,7 @@
             </div>
             <div class="pid-grid">
                 <div class="pid-row">
-                    <div class="pid-group-title" id="pidGroup1">平衡控制参数</div>
+                    <div class="pid-group-title" id="pidGroup1">参数01-03</div>
                     <div class="slider-item">
                         <div class="slider-head"><span id="pid1Label1">参数01</span><span class="nbox"><span
                                     id="sv_key01">0.000</span><input type="number" id="nv_key01" step="0.001"
@@ -181,7 +142,7 @@
                     </div>
                 </div>
                 <div class="pid-row">
-                    <div class="pid-group-title" id="pidGroup2">速度控制参数</div>
+                    <div class="pid-group-title" id="pidGroup2">参数04-06</div>
                     <div class="slider-item">
                         <div class="slider-head"><span id="pid2Label1">参数04</span><span class="nbox"><span
                                     id="sv_key04">0.000</span><input type="number" id="nv_key04" step="0.001"
@@ -199,7 +160,7 @@
                     </div>
                 </div>
                 <div class="pid-row">
-                    <div class="pid-group-title" id="pidGroup3">位置控制参数</div>
+                    <div class="pid-group-title" id="pidGroup3">参数07-09</div>
                     <div class="slider-item">
                         <div class="slider-head"><span id="pid3Label1">参数07</span><span class="nbox"><span
                                     id="sv_key07">0.000</span><input type="number" id="nv_key07" step="0.001"
@@ -217,7 +178,7 @@
                     </div>
                 </div>
                 <div class="pid-row">
-                    <div class="pid-group-title" id="pidGroup4">转向控制参数</div>
+                    <div class="pid-group-title" id="pidGroup4">参数10-12</div>
                     <div class="slider-item">
                         <div class="slider-head"><span id="pid4Label1">参数10</span><span class="nbox"><span
                                     id="sv_key10">0.000</span><input type="number" id="nv_key10" step="0.001"
@@ -240,7 +201,7 @@
         <div class="flex">
             <div class="card" style="flex:1.2">
                 <div class="card-header">
-                    <h2>机甲姿态显示</h2>
+                    <h2>机器人 3D 姿态示意</h2>
                     <button class="btn" id="btnZeroAtt">重置</button>
                 </div>
                 <div id="robotCanvas"></div>
@@ -248,7 +209,7 @@
             </div>
             <div class="card joystick-wrap" style="flex:.8">
                 <div class="joy-panel">
-                    <h2>驾驶操纵盘</h2>
+                    <h2>遥控</h2>
                     <div class="joystick" id="joystick">
                         <div class="stick" id="stick"></div>
                     </div>
@@ -258,7 +219,7 @@
         </div>
 
         <div class="card">
-            <h2>系统记录</h2>
+            <h2>事件日志</h2>
             <pre class="readout" id="log">boot</pre>
         </div>
     </div>
@@ -270,8 +231,8 @@
     <div class="modal hidden" id="groupInviteModal">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
-            <h3 id="groupInviteTitle">加入编队?</h3>
-            <p id="groupInviteDesc">收到主车的编队指令，是否加入？</p>
+            <h3 id="groupInviteTitle">加入车组?</h3>
+            <p id="groupInviteDesc">收到主车的编队配置，是否加入？</p>
             <div class="modal-actions">
                 <button class="btn ghost" id="groupInviteReject">No</button>
                 <button class="btn" id="groupInviteAccept">Yes</button>

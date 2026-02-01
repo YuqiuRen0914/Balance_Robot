@@ -92,27 +92,27 @@ export function connectWebSocket(callbacks = {}) {
   const protocol = location.protocol === "http:" ? "ws://" : "wss://";
   const url = `${protocol}${location.host}/ws`;
 
-  setStatus("连接中…");
+  setStatus("connecting…");
 
   try {
     ws = new WebSocket(url);
 
     ws.onopen = () => {
       state.connected = true;
-      setStatus("已就绪");
+      setStatus("connected");
       sendWebSocketMessage({ type: "get_pid" });
       appendLog("[SEND] get_pid");
     };
 
     ws.onclose = () => {
       state.connected = false;
-      setStatus("重新连接中…");
+      setStatus("reconnecting…");
       reconnect();
     };
 
     ws.onerror = () => {
       state.connected = false;
-      setStatus("异常");
+      setStatus("error");
       // onerror 也会触发 onclose，所以重连逻辑在 onclose 中统一处理
     };
 
@@ -170,22 +170,8 @@ export async function syncInitialState() {
         if (domElements.formationTimeout) domElements.formationTimeout.value = state.formation.timeoutMs;
       }
     }
-    if (s.wifi) {
-      state.wifi.ssid = s.wifi.ssid || state.wifi.ssid;
-      state.wifi.password = s.wifi.password || state.wifi.password;
-      state.wifi.open =
-        typeof s.wifi.open === "boolean"
-          ? s.wifi.open
-          : (s.wifi.password || "").length < 8;
-      state.wifi.ip = s.wifi.ip || state.wifi.ip;
-    }
-    if (typeof s.battery === "number") {
-      state.battery.voltage = s.battery;
-    }
     appendLog(`[INIT] /api/state ok -> running=${s.running}, ms=${s.ms}`);
-    return s;
   } catch (e) {
     appendLog(`[INIT] /api/state fail: ${e.message}`);
-    return null;
   }
 }

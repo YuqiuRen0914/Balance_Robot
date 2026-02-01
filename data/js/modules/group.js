@@ -24,9 +24,9 @@ function setMode(mode) {
   }
   if (mode === "solo") {
     stopFleet(state.formation.groupId);
-    appendLog("[FORMATION] 切换到单机驾驶，已广播紧急制动");
+    appendLog("[FORMATION] 切换到独立模式，已广播急停");
   } else {
-    appendLog("[FORMATION] 编队驾驶已启用，操纵指令将广播到所有成员");
+    appendLog("[FORMATION] 编队模式已启用，摇杆指令将广播到所有成员");
   }
 }
 
@@ -39,7 +39,7 @@ function renderFleet(nodes) {
   if (domElements.fleetCount) domElements.fleetCount.textContent = `${onlineCount}/${enabledNodes.length}`;
 
   if (!nodes.length) {
-    list.innerHTML = '<div class="ghost-text">尚未添加机甲，填入地址后点击“加入编队”</div>';
+    list.innerHTML = '<div class="ghost-text">尚未添加车辆，填入 IP 后点击“添加”</div>';
     return;
   }
 
@@ -74,7 +74,7 @@ function renderFleet(nodes) {
             </div>
           </div>
           <div class="fleet-tags">
-            <span class="tag ${group.group_id ? "" : "muted"}">编队 #${group.group_id ?? state.formation.groupId}</span>
+            <span class="tag ${group.group_id ? "" : "muted"}">组 #${group.group_id ?? state.formation.groupId}</span>
             <span class="tag ${imuOk ? "ok" : "warn"}">${imuOk ? "IMU 正常" : "IMU 校准中"}</span>
             <span class="tag ${failsafe ? "warn" : "muted"}">${failsafe ? "失联安全模式" : "实时"}</span>
             <span class="tag muted">${stale ? "待更新…" : `${Math.round((now - (node.lastSeen || now)))} ms`}</span>
@@ -138,7 +138,7 @@ function bindEvents() {
       const host = domElements.fleetHostInput.value.trim();
       if (!host) return;
       addFleetNode(host, { index: fleetSnapshot().length });
-      appendLog(`[FLEET] 添加机甲 ${host} 中…`);
+      appendLog(`[FLEET] 添加车辆 ${host} 中…`);
       domElements.fleetHostInput.value = "";
     });
     domElements.fleetHostInput.addEventListener("keydown", (e) => {
@@ -171,14 +171,14 @@ function bindEvents() {
   if (domElements.formationSyncBtn) {
     domElements.formationSyncBtn.addEventListener("click", () => {
       syncFleetConfig(state.formation.groupId, state.formation.timeoutMs);
-      appendLog("[FORMATION] 已同步编队指令到成员");
+      appendLog("[FORMATION] 已同步配置到编队成员");
     });
   }
 
   if (domElements.formationStopBtn) {
     domElements.formationStopBtn.addEventListener("click", () => {
       stopFleet(state.formation.groupId);
-      appendLog("[FORMATION] 紧急制动广播完成");
+      appendLog("[FORMATION] 急停广播完成");
     });
   }
 
@@ -260,9 +260,9 @@ function showInvite({ groupId, name, count }) {
   const modal = domElements.groupInviteModal;
   if (!modal) return;
   if (domElements.groupInviteTitle)
-    domElements.groupInviteTitle.textContent = name ? `加入「${name}」?` : `加入编队 #${groupId}?`;
+    domElements.groupInviteTitle.textContent = name ? `加入「${name}」?` : `加入组 #${groupId}?`;
   if (domElements.groupInviteDesc)
-    domElements.groupInviteDesc.textContent = `收到主车的编队指令：编队 #${groupId}${name ? ` · ${name}` : ""}，成员数 ${count ?? "?"}。是否加入？`;
+    domElements.groupInviteDesc.textContent = `收到主车的编队配置：组 #${groupId}${name ? ` · ${name}` : ""}，成员数 ${count ?? "?"}。是否加入？`;
   modal.classList.remove("hidden");
 }
 
@@ -277,7 +277,7 @@ function renderLocalSummary() {
   if (!wrap) return;
   const nameEl = domElements.formationSummaryName;
   const detailEl = domElements.formationSummaryDetail;
-  const name = state.formation.groupName || `编队 #${state.formation.groupId}`;
+  const name = state.formation.groupName || `组 #${state.formation.groupId}`;
   if (nameEl) nameEl.textContent = name;
   if (detailEl)
     detailEl.textContent = `编号 #${state.formation.groupId} · 成员 ${state.formation.memberCount ?? "?"} · 角色 ${state.formation.role || "未知"}`;

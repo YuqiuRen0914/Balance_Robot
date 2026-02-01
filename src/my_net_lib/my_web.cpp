@@ -1,9 +1,6 @@
-#include <WiFi.h>
-#include <AsyncJson.h>
 #include "my_net_config.h"
 #include "my_rgb.h"
 #include "my_car_group.h"
-#include "my_bat.h"
 // ======================= 内部状态 =======================
 // Web/WS 服务实例（仅本翻译单元可见）
 AsyncWebServer server(80);
@@ -113,7 +110,7 @@ void we_evt_connect(AsyncWebSocket *s, AsyncWebSocketClient *c, AwsEventType typ
     // 再发一个简单的 info，便于前端状态显示
     JsonDocument ack;
     ack["type"] = "info";
-    ack["text"] = "已就绪";
+    ack["text"] = "connected";
     wsSendTo(c, ack);
 }
 
@@ -275,68 +272,14 @@ static void handleApiState(AsyncWebServerRequest *req)
     d["running"] = robot.run;
     d["chart_enable"] = robot.chart_enable;
     d["fallen_enable"] = robot.fallen.enable;
-    d["battery"] = battery_voltage;
     d["rgb_mode"] = clamp_rgb_mode(robot.rgb.mode);
     d["rgb_count"] = clamp_rgb_count(robot.rgb.rgb_count);
     d["rgb_max"] = RGB_LED_COUNT;
-    JsonObject w = d["wifi"].to<JsonObject>();
-    const auto &cfg = wifi_current_config();
-    w["ssid"] = cfg.ssid;
-    w["password"] = cfg.password;
-    w["open"] = cfg.open;
-    w["password_length"] = cfg.password.length();
-    w["ip"] = wifi_ap_ip().toString();
     JsonObject g = d["group"].to<JsonObject>();
     g["name"] = robot.group_cfg.name;
     group_write_state(g);
     serializeJson(d, s);
     req->send(200, "application/json; charset=utf-8", s);
-}
-
-static void handleApiWifiGet(AsyncWebServerRequest *req)
-{
-    JsonDocument d;
-    JsonObject w = d["wifi"].to<JsonObject>();
-    const auto &cfg = wifi_current_config();
-    w["ssid"] = cfg.ssid;
-    w["password"] = cfg.password;
-    w["open"] = cfg.open;
-    w["password_length"] = cfg.password.length();
-    w["ip"] = wifi_ap_ip().toString();
-    String s;
-    serializeJson(d, s);
-    req->send(200, "application/json; charset=utf-8", s);
-}
-
-static void handleApiWifiPost(AsyncWebServerRequest *req, JsonVariant &json)
-{
-    JsonObject obj = json.as<JsonObject>();
-    const char *ssid = obj["ssid"] | "";
-    const char *pwd = obj["password"] | "";
-    String err;
-    if (!wifi_update_and_apply(ssid, pwd, err))
-    {
-        JsonDocument resp;
-        resp["ok"] = false;
-        resp["error"] = err;
-        String out;
-        serializeJson(resp, out);
-        req->send(400, "application/json; charset=utf-8", out);
-        return;
-    }
-
-    JsonDocument resp;
-    resp["ok"] = true;
-    JsonObject w = resp["wifi"].to<JsonObject>();
-    const auto &cfg = wifi_current_config();
-    w["ssid"] = cfg.ssid;
-    w["password"] = cfg.password;
-    w["open"] = cfg.open;
-    w["password_length"] = cfg.password.length();
-    w["ip"] = wifi_ap_ip().toString();
-    String out;
-    serializeJson(resp, out);
-    req->send(200, "application/json; charset=utf-8", out);
 }
 
 static void handleRootRequest(AsyncWebServerRequest *req)
@@ -363,9 +306,7 @@ void my_web_asyn_init()
     server.addHandler(&ws);
 
     server.on("/api/state", HTTP_GET, handleApiState); // 3) 基础 API
-    server.on("/api/wifi", HTTP_GET, handleApiWifiGet);
-    server.addHandler(new AsyncCallbackJsonWebHandler("/api/wifi", handleApiWifiPost));
-    server.on("/", HTTP_GET, handleRootRequest); // 4) 静态文件
+    server.on("/", HTTP_GET, handleRootRequest);       // 4) 静态文件
     server.onNotFound(handleNotFound);
     server.begin(); // 5) 启动 HTTP
 }
