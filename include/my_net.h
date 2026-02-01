@@ -11,22 +11,6 @@ void my_wifi_init();       // 初始化网络
 void my_web_asyn_init();   // 初始化网页
 void my_web_data_update(); // 数据更新
 
-<<<<<<< Updated upstream
-=======
-struct wifi_runtime_config
-{
-    String ssid;
-    String password;
-    bool open;
-};
-
-// WiFi 配置（SoftAP）
-const wifi_runtime_config &wifi_current_config();
-bool wifi_update_and_apply(const String &ssid, const String &password, String &err);
-IPAddress wifi_ap_ip();
-IPAddress wifi_sta_ip();
-
->>>>>>> Stashed changes
 // 图表显示模式
 #define CHART_PID
 // #define CHART_FOC

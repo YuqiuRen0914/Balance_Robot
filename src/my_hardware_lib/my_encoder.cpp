@@ -2,7 +2,6 @@
 #include "my_encoder.h"
 #include "my_config.h"
 #include "my_motion.h"
-#include "my_boardRGB.h"
 #include "driver/gpio.h"  
 #include "driver/pcnt.h" 
 
@@ -82,12 +81,7 @@ void my_encoder_init()
     Encoder_Right_Delta = 0; // 清零右轮增量缓存
     LeftTotalCount = 0;
     RightTotalCount = 0;
-    encoder_ready = left_ok && right_ok; 
-    if (!encoder_ready)
-    {
-        Serial.println("[ENC] encoder init failed");
-        my_boardRGB_notify_peripheral_missing();
-    }
+    encoder_ready = left_ok && right_ok;    
 }
 
 // 刷新并清零编码器计数

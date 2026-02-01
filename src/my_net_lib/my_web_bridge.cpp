@@ -1,12 +1,6 @@
 #include <cmath>
-#include <esp_wifi.h>
 #include "my_net_config.h"
 #include "my_car_group.h"
-<<<<<<< Updated upstream
-=======
-#include "my_group_link.h"
-#include "my_bat.h"
->>>>>>> Stashed changes
 
 static constexpr float JOY_X_DEADBAND = 0.10f;
 static constexpr float JOY_Y_DEADBAND = 0.02f;
@@ -25,21 +19,8 @@ void my_web_data_update()
     doc["pitch"] = ANGLE_X;
     doc["roll"] = ANGLE_Y;
     doc["yaw"] = ANGLE_Z;
-<<<<<<< Updated upstream
-=======
-    doc["battery"] = battery_voltage;
-    uint8_t self_mac[6];
-    if (group_link_get_self_mac(self_mac))
-    {
-        char macstr[18];
-        group_link_format_mac(self_mac, macstr);
-        doc["self_mac"] = macstr;
-    }
->>>>>>> Stashed changes
     JsonObject g = doc["group"].to<JsonObject>();
     group_write_state(g);
-    JsonArray peers = doc["peers"].to<JsonArray>();
-    group_discovery_write(peers);
     // 根据 charts_send 决定是否打包 n 路曲线数据
     if (robot.chart_enable)
     {

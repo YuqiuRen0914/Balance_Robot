@@ -11,10 +11,6 @@
 #define RGB_LED_PIN         38
 #define RGB_LED_COUNT       5
 
-/********** 板载RGB **********/
-#define BOARD_RGB_PIN       48
-#define BOARD_RGB_COUNT     1
-
 /********** AB编码器  **********/
 /* 左轮编码器 */
 #define ENCODER_B1A_PIN      GPIO_NUM_17  
@@ -64,12 +60,8 @@ static constexpr float YAW_RATE_CMD_DEADBAND = 0.5f;       // 摇杆转换的角
 static constexpr float YAW_TORQUE_DEADBAND = 0.02f;        // 偏航输出死区，避免轻微抖动
 
 /********** wifi配置 **********/
-// 默认接入园区 Wi‑Fi（全队统一联网，关闭 ESP-NOW）
-#define WIFI_DEFAULT_SSID "xbotpark_Guest"
-#define WIFI_DEFAULT_PASSWORD "sslrobot123*"
-// 本地热点前缀（手机连接控制界面）；后缀自动追加 MAC 末 3 字节确保唯一
-#define WIFI_AP_PREFIX "Balance"
-#define WIFI_AP_PASSWORD "123456789"
+#define SSID "roderick"
+#define PASSWORD "qazwsxedcr"
 
 /********** 电池检测 **********/
 #define BAT_PIN 10
@@ -166,21 +158,6 @@ struct group_state
     uint32_t last_msg_ms; // 最近一次收到编队指令的时间戳
     uint32_t timeout_ms;  // 超时时长，超时进入安全模式
     bool failsafe;        // 是否处于安全模式（无指令超时）
-    uint8_t leader_mac[6];    // 记录主车 MAC，便于中继邀请回到主车审批
-    bool leader_mac_valid;
-    uint32_t leader_ip;       // 主车 IP（网络序）
-    bool leader_ip_valid;
-    bool invite_pending;      // 是否有未处理的邀请
-    bool invite_from_is_leader;
-    int invite_group;         // 邀请的编队号
-    char invite_name[24];     // 邀请的编队名称
-    uint8_t invite_from[6];
-    uint32_t invite_from_ip;  // 邀请方 IP（网络序）
-    bool request_pending;     // 是否有待审批的入队申请（仅主车）
-    int request_group;
-    char request_name[24];    // 申请方名称（wifi ssid）
-    uint8_t request_from[6];
-    uint32_t request_from_ip; // 申请方 IP（网络序）
 };
 
 struct robot_state

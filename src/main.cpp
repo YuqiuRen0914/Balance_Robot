@@ -6,8 +6,6 @@
 #include "my_config.h"
 #include "my_rgb.h"
 #include "my_bat.h"
-#include "my_boardRGB.h"
-#include "my_group_link.h"
 
 static TaskHandle_t control_TaskHandle = nullptr;   // 运动控制
 static TaskHandle_t data_send_TaskHandle = nullptr; // 网页任务
@@ -46,7 +44,6 @@ void rgb_Task(void *)
     for (;;)
     {
         my_rgb_update();
-        my_boardRGB_update();
         vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
@@ -54,14 +51,10 @@ void rgb_Task(void *)
 void setup() {
   //串口初始化
   Serial.begin(115200);
-  //板载RGB
-  my_boardRGB_init();
   //I2C初始化
   my_i2c_init();
   //wifi初始化
   my_wifi_init();
-  //ESP-NOW 链路（用于编队下行）
-  group_link_init();
   //初始化异步服务器
   my_web_asyn_init();
   //初始化运动

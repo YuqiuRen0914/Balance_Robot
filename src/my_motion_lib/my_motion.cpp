@@ -3,9 +3,7 @@
 #include "my_motor.h"
 #include "my_control.h"
 #include "my_car_group.h"
-#include "my_group_link.h"
 #include "my_tool.h"
-#include "my_pid_limits.h"
 
 robot_state robot = {
     // 状态指示位
@@ -17,11 +15,11 @@ robot_state robot = {
     .chart_enable = false,     // 图表推送位
     .joy_stop_control = false, // 原地停车标志
     .wel_up = false,           // 轮部离地标志
-    .pitch_zero = -5.5,       // pitch零点
+    .pitch_zero = -2.1,       // pitch零点
     .group_cfg = {
         .enabled = false,
         .group_number = 1,
-        .group_count = 1,
+        .group_count = 0,
         .member_index = 0,
         .role = group_role::leader,
         .target_linear = 0.0f,
@@ -31,16 +29,6 @@ robot_state robot = {
         .last_msg_ms = 0,
         .timeout_ms = 800,
         .failsafe = false,
-        .leader_mac = {0},
-        .leader_mac_valid = false,
-        .invite_pending = false,
-        .invite_from_is_leader = false,
-        .invite_group = 0,
-        .invite_name = {0},
-        .invite_from = {0},
-        .request_pending = false,
-        .request_group = 0,
-        .request_from = {0},
     },         // 编队状态
     // 轮子数据
     .wel = {0, 0, 0, 0},                                 // 轮子数据 wel1 , wel2, pos1, pos2
@@ -73,7 +61,7 @@ robot_state robot = {
     .pos = {0, 0, 0, 0, 0}, // 位置环状态
     .yaw = {0, 0, 0, 0, 0}, // 偏航环状态
     // pid参数设定
-    .ang_pid = {0.4f, 10.0f, 0.012f, 100000, 250}, // 直立环参数
+    .ang_pid = {0.6f, 10.0f, 0.016f, 100000, 250}, // 直立环参数
     .spd_pid = {0.003f, 0.00f, 0.00f, 100000, 5}, // 速度环参数
     .pos_pid = {0.00f, 0.00f, 0.00f, 100000, 5}, // 位置环参数
     .yaw_pid = {0.025f, 0.00f, 0.00f, 100000, 5}, // 偏航环参数：P为转向力度，D为阻尼
@@ -81,9 +69,6 @@ robot_state robot = {
 
 void my_motion_init()
 {
-    clamp_all_pid(robot);  // 确保硬编码默认值符合安全上限
-    pid_state_update();    // 同步到控制器
-
     my_mpu6050_init();
 
     my_motor_init();
@@ -103,7 +88,6 @@ void my_motion_update()
     robot_state_update();
     // 编队指令映射到本地摇杆
     group_tick();
-    group_link_poll();
 
     // 模式切换时清积分，避免残余输出
     if (robot.car_group_mode != last_car_group_mode)

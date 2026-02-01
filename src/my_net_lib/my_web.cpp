@@ -1,18 +1,6 @@
-<<<<<<< Updated upstream
 #include "my_net_config.h"
 #include "my_rgb.h"
 #include "my_car_group.h"
-=======
-#include <WiFi.h>
-#include <AsyncJson.h>
-#include <lwip/def.h>
-#include "my_net_config.h"
-#include "my_rgb.h"
-#include "my_car_group.h"
-#include "my_bat.h"
-#include "my_pid_limits.h"
-#include "my_group_link.h"
->>>>>>> Stashed changes
 // ======================= 内部状态 =======================
 // Web/WS 服务实例（仅本翻译单元可见）
 AsyncWebServer server(80);
@@ -116,17 +104,6 @@ void we_evt_connect(AsyncWebSocket *s, AsyncWebSocketClient *c, AwsEventType typ
     rgb_state["mode"] = robot.rgb.mode;
     rgb_state["count"] = robot.rgb.rgb_count;
     rgb["max_count"] = RGB_LED_COUNT;
-
-    // pid limits (对称范围)，顺序与 key01-key12 一致
-    JsonArray pid_limits = doc["pid_limits"].to<JsonArray>();
-    for (int i = 0; i < 12; ++i)
-    {
-        const float lim = pid_limit_max_for_key(i);
-        JsonObject p = pid_limits.add<JsonObject>();
-        p["min"] = -lim;
-        p["max"] = lim;
-    }
-
     doc.shrinkToFit(); // 发送前收紧空间，减轻带宽
     // 先发 ui_config（首连一次，配置标题/图例/分组名称）
     wsSendTo(c, doc);
@@ -186,12 +163,7 @@ void ws_evt_data(AsyncWebSocket *s, AsyncWebSocketClient *c, AwsEventType type, 
 
     // 6) 摇杆
     else if (!strcmp(typeStr, "joy"))
-    {
-        // 从车角色时屏蔽本地摇杆，防止自行动作
-        if (robot.group_cfg.role == group_role::follower)
-            return;
         web_joystick(doc["x"] | 0.0f, doc["y"] | 0.0f, doc["a"] | 0.0f);
-    }
 
     // 7) 设置 PID
     else if (!strcmp(typeStr, "set_pid"))
@@ -237,60 +209,6 @@ void ws_evt_data(AsyncWebSocket *s, AsyncWebSocketClient *c, AwsEventType type, 
 
     else if (!strcmp(typeStr, "group_query"))
         send_group_state(c);
-    else if (!strcmp(typeStr, "group_invite_target"))
-    {
-        const char *macStr = doc["mac"] | "";
-        const char *ipStr = doc["ip"] | "";
-        uint8_t mac[6];
-        uint32_t ip_be = 0;
-        IPAddress ip;
-        if (ip.fromString(ipStr))
-            ip_be = htonl((uint32_t)ip);
-        if (group_link_parse_mac(macStr, mac))
-        {
-            const int gid = doc["group_id"] | robot.group_cfg.group_number;
-            const int count = doc["count"] | robot.group_cfg.group_count;
-            const uint32_t to = doc["timeout_ms"] | robot.group_cfg.timeout_ms;
-            const char *name = doc["name"] | robot.group_cfg.name;
-            group_link_send_invite_to(mac, gid, name, count, to, ip_be);
-        }
-    }
-    else if (!strcmp(typeStr, "group_invite_reply"))
-    {
-        const bool accept = doc["accept"] | false;
-        group_link_accept_invite(accept);
-        send_group_state(nullptr);
-    }
-    else if (!strcmp(typeStr, "group_request_join"))
-    {
-        const int gid = doc["group_id"] | robot.group_cfg.group_number;
-        const char *name = doc["name"] | robot.group_cfg.name;
-        group_link_send_request(gid, name);
-    }
-    else if (!strcmp(typeStr, "group_request_join_target"))
-    {
-        const char *macStr = doc["mac"] | "";
-        const char *ipStr = doc["ip"] | "";
-        uint8_t mac[6];
-        uint32_t ip_be = 0;
-        IPAddress ip;
-        if (ip.fromString(ipStr))
-            ip_be = htonl((uint32_t)ip);
-        if (group_link_parse_mac(macStr, mac))
-        {
-            const int gid = doc["group_id"] | robot.group_cfg.group_number;
-            const char *name = doc["name"] | robot.group_cfg.name;
-            group_link_send_request_to(mac, gid, name, ip_be);
-        }
-    }
-    else if (!strcmp(typeStr, "group_request_reply"))
-    {
-        const bool accept = doc["accept"] | false;
-        const int idx = doc["index"] | -1;
-        const int count = doc["count"] | -1;
-        group_link_reply_request(accept, idx, count);
-        send_group_state(nullptr);
-    }
 
     else if (!strcmp(typeStr, "rgb_set"))
     {
@@ -357,32 +275,6 @@ static void handleApiState(AsyncWebServerRequest *req)
     d["rgb_mode"] = clamp_rgb_mode(robot.rgb.mode);
     d["rgb_count"] = clamp_rgb_count(robot.rgb.rgb_count);
     d["rgb_max"] = RGB_LED_COUNT;
-<<<<<<< Updated upstream
-=======
-    uint8_t self_mac[6];
-    if (group_link_get_self_mac(self_mac))
-    {
-        char macstr[18];
-        group_link_format_mac(self_mac, macstr);
-        d["self_mac"] = macstr;
-    }
-    JsonObject w = d["wifi"].to<JsonObject>();
-    const auto &cfg = wifi_current_config();
-    w["ssid"] = cfg.ssid;
-    w["password"] = cfg.password;
-    w["open"] = cfg.open;
-    w["password_length"] = cfg.password.length();
-    w["ip"] = wifi_ap_ip().toString();
-    w["sta_ssid"] = WIFI_DEFAULT_SSID;
-    w["sta_ip"] = wifi_sta_ip().toString();
-    w["sta_connected"] = WiFi.status() == WL_CONNECTED;
-    w["sta_ssid"] = WIFI_DEFAULT_SSID;
-    w["sta_ip"] = wifi_sta_ip().toString();
-    w["sta_connected"] = WiFi.status() == WL_CONNECTED;
-    w["sta_ssid"] = WIFI_DEFAULT_SSID;
-    w["sta_ip"] = wifi_sta_ip().toString();
-    w["sta_connected"] = WiFi.status() == WL_CONNECTED;
->>>>>>> Stashed changes
     JsonObject g = d["group"].to<JsonObject>();
     g["name"] = robot.group_cfg.name;
     group_write_state(g);

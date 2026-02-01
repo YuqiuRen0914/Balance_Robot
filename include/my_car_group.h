@@ -19,7 +19,7 @@ struct group_command
 };
 
 void my_group_init();
-void group_apply_config(const group_command &cmd, bool propagate = true);
+void group_apply_config(const group_command &cmd);
 void group_apply_command(const group_command &cmd);
 void group_tick();
 

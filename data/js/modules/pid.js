@@ -9,15 +9,6 @@ const getPidElements = (k) => ({
   rg: document.getElementById(`rg_${k}`),
 });
 
-const clampByLimit = (k, value) => {
-  if (!Number.isFinite(value)) return 0;
-  const lim = state.pidLimits?.[k];
-  if (!lim) return value;
-  if (value < lim.min) return lim.min;
-  if (value > lim.max) return lim.max;
-  return value;
-};
-
 /**
  * Binds events for a single PID key (slider and number input)
  * @param {object} keyInfo - { k: 'key01', fix: 3 }
@@ -28,24 +19,18 @@ function bindPidKey(keyInfo) {
 
   if (!nv || !rg) return;
 
-  // Apply min/max limits to UI controls
-  const lim = state.pidLimits?.[k];
-  if (lim) {
-    rg.min = lim.min;
-    rg.max = lim.max;
-    nv.min = lim.min;
-    nv.max = lim.max;
-  }
-
-  // Initialize state with value from the number input (clamped)
-  const initialValue = clampByLimit(k, parseFloat(nv.value || "0"));
+  // Initialize state with value from the number input
+  const initialValue = parseFloat(nv.value || "0");
   state.pidParams[k] = initialValue;
-  nv.value = initialValue.toFixed(fix);
   if (sv) sv.textContent = initialValue.toFixed(fix);
 
   // Sync slider's position from a given value, clamping it within min/max
   const updateSliderPosition = (value) => {
-    const clampedValue = clampByLimit(k, value);
+    const lo = parseFloat(rg.min);
+    const hi = parseFloat(rg.max);
+    let clampedValue = value;
+    if (Number.isFinite(lo) && clampedValue < lo) clampedValue = lo;
+    if (Number.isFinite(hi) && clampedValue > hi) clampedValue = hi;
     rg.value = String(clampedValue);
   };
 
@@ -55,8 +40,7 @@ function bindPidKey(keyInfo) {
 
   // Slider changes -> update number input and state
   rg.addEventListener("input", () => {
-    const value = clampByLimit(k, parseFloat(rg.value));
-    rg.value = String(value);
+    const value = parseFloat(rg.value);
     nv.value = value.toFixed(fix);
     if (sv) sv.textContent = value.toFixed(fix);
     state.pidParams[k] = value;
@@ -64,20 +48,24 @@ function bindPidKey(keyInfo) {
 
   // Number input changes -> update display, state, and slider position
   nv.addEventListener("input", () => {
-    const value = clampByLimit(k, parseFloat(nv.value));
-    if (!Number.isFinite(value)) return;
-    nv.value = value.toFixed(fix);
-    if (sv) sv.textContent = value.toFixed(fix);
-    updateSliderPosition(value);
-    state.pidParams[k] = value;
+    const rawValue = nv.value;
+    const value = parseFloat(rawValue);
+    if (Number.isFinite(value)) {
+      if (sv) sv.textContent = rawValue; // Show intermediate value for better UX
+      updateSliderPosition(value);
+      state.pidParams[k] = value;
+    }
   });
 
   // Format and commit number input on change, blur, or Enter key
   const commitNumberInput = () => {
-    const value = clampByLimit(k, parseFloat(nv.value));
-    nv.value = Number.isFinite(value) ? value.toFixed(fix) : "0.000";
-    rg.value = String(value);
-    // Manually trigger the 'input' event on the slider to sync everything (state + sv)
+    let value = parseFloat(nv.value);
+    if (!Number.isFinite(value)) value = 0;
+
+    // Format the number input
+    nv.value = value.toFixed(fix);
+
+    // Manually trigger the 'input' event on the slider to sync everything
     rg.dispatchEvent(new Event("input"));
   };
 
@@ -118,14 +106,14 @@ export function fillPidToUI(params) {
     const keyInfo = PID_KEYS.find((item) => item.k === k);
     if (!keyInfo) return; // Ignore unknown keys
 
-    const v = clampByLimit(k, +params[k]);
+    const v = +params[k];
     if (!Number.isFinite(v)) return;
 
     const { sv, nv, rg } = getPidElements(k);
 
     if (sv) sv.textContent = v.toFixed(keyInfo.fix);
     if (nv) nv.value = v.toFixed(keyInfo.fix);
-    if (rg) rg.value = String(v);
+    if (rg) rg.value = String(v); // This will also be clamped by the browser if out of range
 
     state.pidParams[k] = v;
   });
@@ -149,38 +137,6 @@ export function applySliderConfig(config) {
         );
         if (labelEl) labelEl.textContent = name;
       });
-    }
-  });
-}
-
-/**
- * 应用从后端下发的 PID 上下限，并更新控件属性
- * @param {Array<{min:number,max:number}>} limitsArr
- */
-export function applyPidLimits(limitsArr) {
-  if (!Array.isArray(limitsArr) || limitsArr.length !== PID_KEYS.length) return;
-  PID_KEYS.forEach(({ k }, idx) => {
-    const lim = limitsArr[idx];
-    if (!lim || !Number.isFinite(lim.min) || !Number.isFinite(lim.max)) return;
-    state.pidLimits[k] = { min: lim.min, max: lim.max };
-
-    state.pidParams[k] = clampByLimit(k, state.pidParams[k]);
-
-    const { nv, rg, sv } = getPidElements(k);
-    const keyInfo = PID_KEYS[idx];
-    if (rg) {
-      rg.min = lim.min;
-      rg.max = lim.max;
-      const v = clampByLimit(k, parseFloat(rg.value));
-      rg.value = String(v);
-      if (sv && keyInfo) sv.textContent = v.toFixed(keyInfo.fix);
-    }
-    if (nv) {
-      nv.min = lim.min;
-      nv.max = lim.max;
-      const v = clampByLimit(k, parseFloat(nv.value));
-      nv.value = Number.isFinite(v) ? v.toFixed(3) : nv.value;
-      if (sv && keyInfo) sv.textContent = clampByLimit(k, parseFloat(nv.value)).toFixed(keyInfo.fix);
     }
   });
 }
